@@ -8,4 +8,5 @@ identifying frame boundaries, and dispatching complete frames to user-supplied
 parsers — while leaving message decoding entirely to the user.
 
 To that end, several parsers exist designed to work with this library:
- - NMEA Parser
+ - toit-nmea-message - a NMEA protocol parser, with several proprietary NMEA message sets included for CASIC, uBlox, and others.
+ - ubx-message - the original uBlox message parser created by the Toit team.
