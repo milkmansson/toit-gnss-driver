@@ -1,0 +1,8 @@
+prefixes:
+  gnss-driver: ..
+  nmea-message: toit-nmea-message
+packages:
+  ..:
+    path: ..
+  toit-nmea-message:
+    path: ../../toit-nmea-message

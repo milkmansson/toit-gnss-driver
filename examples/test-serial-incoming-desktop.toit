@@ -6,8 +6,8 @@ import gpio
 import uart
 import io
 
+import gnss-driver show *
 import nmea-message show *
-import nmea-message.gnss-driver show *
 import nmea-message.nmea-ubx-message show *
 
 DEVICE := "COM5"
