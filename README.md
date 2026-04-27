@@ -1,4 +1,4 @@
-# Basic device agnostic GNSS Driver
+# Device- and Protocol-agnostic GNSS Driver for Toit.
 Base parser-agnostic driver for GNSS devices.
 
 ## Design
