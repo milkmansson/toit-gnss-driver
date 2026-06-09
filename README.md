@@ -42,14 +42,13 @@ package to wrap a `serial.Device`.
    at least one parser is registered, the receive loop simply discards bytes.
 
 3. **Register parsers.** For each protocol you want decoded, call `add-parser`
-   with the *magic byte sequence* that identifies that protocol on the wire and a
-   lambda that consumes exactly one frame and returns the decoded message. The
-   magic is `#[0x24]` (`$`) for NMEA and `#[0xb5, 0x62]` for UBX.
+   with an instance of the parser class for handling those messages.  (Parser
+   class must contain `.magic` and `.from-reader` functions.)
 
-4. **Consume messages.** Messsages can be consumed by either
-   a) Read the most recent message of a type from `latest-message`, or,
-   b) register a lambda to be called as each message arrives, or send a poll
-      and wait synchronously for the reply.
+4. **Consume messages.** Messsages can be consumed by
+   a) Reading the most recent message of a type from `latest-message`, or,
+   b) register a lambda to be called as each message arrives,
+   c) send a poll and wait synchronously for the reply.
 
 ## Quick start
 

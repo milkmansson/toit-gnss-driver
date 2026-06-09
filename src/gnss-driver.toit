@@ -182,23 +182,28 @@ class Gnss-driver:
     adapter_.add-parser_ parser.magic (:: | r | parser.from-reader r)
 
   /**
+  Variant of add-parser that allows a custom magic-byte and parser combination.
+
+  $code would be equivalent to: `(:: | r | parser.from-reader r)`
+  */
+  add-parser magic/ByteArray code/Lambda-> none:
+    adapter_.add-parser_ magic code
+
+  /**
   Registers $magic as a skip-only protocol.
 
   When the adapter sees $magic at the head of the stream, the corresponding
     skip routine is called to consume one complete frame, but no message is
     returned to the caller.  The frame is silently discarded.
-
-  If $skip is provided, it is used.  Otherwise the driver looks up a built-in
-    skip routine for $magic; if none exists, a one-byte fallback is used and
-    a warning is logged once.
   */
-  add-skip magic/ByteArray --skip/Lambda?=null -> none:
-    adapter_.add-skip_ magic --skip=skip
+  add-skip magic/ByteArray -> none:
+    //adapter_.add-skip_ magic --skip=skip
+    adapter_.add-parser_ magic (:: | r | yield )
 
   /**
   Removes any parser or skip registration for $magic.
   */
-  remove-handler magic/ByteArray -> none:
+  remove-parser magic/ByteArray -> none:
     adapter_.remove-handler_ magic
 
   /**

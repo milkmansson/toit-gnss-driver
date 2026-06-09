@@ -26,7 +26,7 @@ main:
   port := uart.Port DEVICE --baud-rate=BAUD
 
   driver := Gnss-driver port.in port.out
-  driver.add-parser #[0x24] (:: | r | nmea-parser.from-reader r)
+  driver.add-parser nmea-parser
 
   // Print driver start message, and let the driver's own tasks run and
   // simply display incoming messages.
