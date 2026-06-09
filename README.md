@@ -68,15 +68,18 @@ main:
 
   // Register the NMEA parser against the NMEA magic byte ('$' == 0x24).
   nmea-parser := NmeaParser
-  driver.add-parser #[0x24] (:: | r | nmea-parser.from-reader r)
+  driver.add-parser nmea-parser
+
+  // Register a catch-all function that prints incoming messages that have
+  // no other lambda's registered.
+  driver.register-default-lambda (:: | msg | print "$msg")
 ```
 
 At this point the driver is already reading and decoding NMEA frames in the
-background. UBX and CASIC frames (and AIS) are skipped automatically, so they
-will not corrupt NMEA frame detection even though no parser is registered for
-them.
+background. Other frame types are skipped automatically, so they will not
+corrupt NMEA frame detection.
 
-## Registering parsers
+## Registering custom parsers manually
 
 A parser is registered with a magic byte sequence and a parse lambda:
 

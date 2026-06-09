@@ -2,7 +2,7 @@ import uart
 
 /** Echo serial input to serial monitor, using RAW for troubleshooting. */
 
-DEVICE := "COM5"
+DEVICE := "COM19"
 //DEVICE := "\\\\.\\COM3"
 //DEVICE := "COM19" // Windows
 //DEVICE := "/dev/ttyACM0" // Linux (example)
