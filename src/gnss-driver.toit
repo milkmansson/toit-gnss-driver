@@ -163,19 +163,21 @@ class Gnss-driver:
     run
 
   /**
-  Registers a parse $lambda for the given $magic byte sequence.
+  Registers $parser to handle frames it recognises on the wire.
 
-  When the adapter sees $magic at the head of the stream, $lambda is called
-    with the underlying $io.Reader.  The lambda must consume exactly one
-    complete frame from the reader and return the parsed message (any type).
+  The $parser must expose two members: `.magic`, the byte sequence that
+    identifies its protocol at the head of the stream, and a `.from-reader`
+    method that consumes exactly one complete frame from an $io.Reader and
+    returns the parsed message (any type).
 
-  If $skip is provided, it is used as the skip routine when a parse fails
-    or when the magic later transitions to skip-only.  If $skip is null, the
-    driver looks up a built-in skip routine for $magic; if none exists, a
-    one-byte fallback is used and a warning is logged once.
+  When the adapter sees `.magic` at the head of the stream, the parser's
+    `.from-reader` is called with the underlying $io.Reader to consume one
+    frame and produce a message.
+
+  The skip routine for `.magic` is resolved by the adapter: a built-in
+    routine is used if one exists for that magic, otherwise a one-byte fallback
+    is used and a warning is logged once.
   */
-  //add-parser magic/ByteArray lambda/Lambda --skip/Lambda?=null -> none:
-  //  adapter_.add-parser_ magic lambda --skip=skip
   add-parser parser -> none:
     adapter_.add-parser_ parser.magic (:: | r | parser.from-reader r)
 
