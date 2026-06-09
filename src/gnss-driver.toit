@@ -174,8 +174,10 @@ class Gnss-driver:
     driver looks up a built-in skip routine for $magic; if none exists, a
     one-byte fallback is used and a warning is logged once.
   */
-  add-parser magic/ByteArray lambda/Lambda --skip/Lambda?=null -> none:
-    adapter_.add-parser_ magic lambda --skip=skip
+  //add-parser magic/ByteArray lambda/Lambda --skip/Lambda?=null -> none:
+  //  adapter_.add-parser_ magic lambda --skip=skip
+  add-parser parser -> none:
+    adapter_.add-parser_ parser.magic (:: | r | parser.from-reader r)
 
   /**
   Registers $magic as a skip-only protocol.
