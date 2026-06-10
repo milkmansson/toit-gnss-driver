@@ -1,0 +1,5 @@
+dependencies:
+  gnss-driver:
+    path: ../
+  nmea-message:
+    path: ../../toit-nmea-message/
