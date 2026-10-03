@@ -10,8 +10,7 @@ import gnss-driver show *
 import nmea-message show *
 import nmea-message.nmea-ubx-message show *
 
-DEVICE := "COM19"
-
+DEVICE := "COM11"
 BAUD   := 9600
 //BAUD   := 38400
 //BAUD   := 115200
@@ -28,6 +27,6 @@ main:
   driver := Gnss-driver port.in port.out
   driver.add-parser nmea-parser
 
-  // Print driver start message, and let the driver's own tasks run and simply display incoming messages.
+  // Print driver start message, and let the driver's tasks run, displaying incoming messages.
   driver.register-default-lambda (:: | msg | print "$msg")
   print "Driver started..."

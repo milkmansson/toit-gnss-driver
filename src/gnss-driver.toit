@@ -148,16 +148,23 @@ class Gnss-driver:
   Create an $io.Reader from a $serial.Device, and provide as $reader.  Similarly,
     create an $io.Writer from a $serial.Device, and provide as $writer.
 
-  After construction, register one or more parsers via $add-parser before
-    expecting any messages.  If no parsers are registered, the receive loop
-    will spin discarding bytes until something is registered.
+  Parsers need to be registered.  This can be done as part of the constructor by
+    supplying them in $parsers as a List.  Otherwise, register one or more
+    parsers using $add-parser after construction.  If no parsers are registered,
+    the receive loop will spin discarding bytes until something is registered.
   */
   constructor
       reader/io.Reader
       writer/io.Writer
+      --parsers/List?=null
       logger/log.Logger=log.default:
     logger_ = logger.with-name "gnss-driver"
     adapter_ = Adapter_ reader writer logger_
+
+    // If parsers are provided and not null, register them immediately.
+    if parsers:
+      parsers.do:
+        add-parser it
 
     // Starts the task that listens for incoming messages.
     run
@@ -563,6 +570,7 @@ class Adapter_:
 
       // No magic matched.  Advance one byte.
       reader_.skip 1
+      yield
 
   /** Returns true if $haystack starts with $needle. */
   static matches-prefix_ haystack/ByteArray needle/ByteArray -> bool:

@@ -8,6 +8,7 @@ Base parser-agnostic driver for GNSS devices.
 Toit. It handles the wire-level work — reading bytes from a serial, I2C, or SPI
 transport, identifying frame boundaries, and dispatching complete frames to
 user-supplied parsers — while leaving message decoding entirely to the user.
+The driver does not know how to decode any protocol itself.
 
 To that end, several parsers exist designed to work with this library:
 
@@ -16,16 +17,14 @@ To that end, several parsers exist designed to work with this library:
 - `ubx-message` — the original uBlox message parser created by the Toit team,
   for handling uBlox binary message types.
 
-The driver does not know how to decode any protocol itself.  Instead, the user
-tells it which protocols to take care of by registering a *parser* for each one.
-The driver recognises where each frame starts and ends on the wire, hands
-complete frames to the supplied parser, and makes the decoded result available.
-Messages/Protocols that do not have a parser registered for are skipped cleanly,
-so their bytes are never mistaken for the start of a frame we do wish to recieve.
+The driver recognises where each frame starts and ends on the wire, then hands
+complete frames to the supplied parser.  The parser creates the objects, which
+the driver makes available.  Messages/Protocols that do not have a parser
+registered for are skipped cleanly, so their bytes are never mistaken for the
+start of a frame we do wish to recieve.
 
-This method allows extensibility, whilst also allowing code to be reduced
-significantly by manually removing code for message types that the use case
-is not interested in.
+This method allows extensibility, whilst also allowing code size to be reduced
+by allowing users to register only for messages they are interested in.
 
 ## How it works
 
@@ -34,21 +33,24 @@ The driver follows a small number of steps:
 1. **Create a transport.** Obtain an `io.Reader` and `io.Writer` for your device.
 Over UART these come directly from a `uart.Port` (`port.in` / `port.out`). Over
 I2C or SPI, use the `Reader` and `Writer` helper classes included in this
-package to wrap a `serial.Device`.
+package to wrap a `serial.Device`.  ([Examples](./examples) are provided.)
 
 2. **Create the driver.** Constructing a `Gnss-driver` starts an internal
-   background task (the *receiver task*) that continuously reads frames from the
-   wire. This task starts immediately, so register your parsers promptly — until
-   at least one parser is registered, the receive loop simply discards bytes.
+background task (the *receiver task*) that continuously reads frames from the
+wire. This task starts immediately, so parsers should be registered promptly,
+ideally using the constructor.  Until at least one parser is registered, the
+receive loop simply discards bytes.
 
-3. **Register parsers.** For each protocol you want decoded, call `add-parser`
-   with an instance of the parser class for handling those messages.  (Parser
-   class must contain `.magic` and `.from-reader` functions.)
+3. **Register parsers.** For each protocol to be decoded, either supply the
+parser in the constructor, or call `add-parser` once for each instance of the
+parser class for handling those message types.  (Parser class must contain
+`.magic` and `.from-reader` functions.)
 
-4. **Consume messages.** Messsages can be consumed by
+4. **Consume incoming messages.** Messsages can be consumed by
    a) Reading the most recent message of a type from `latest-message`, or,
-   b) register a lambda to be called as each message arrives,
-   c) send a poll and wait synchronously for the reply.
+   b) register a lambda to be called on receipt of a specific message type - the
+      lambda will be called once for each message that arrives of that type.
+   c) send a poll and wait synchronously or asynchronously, for the reply.
 
 ## Quick start
 
@@ -63,36 +65,39 @@ import nmea-message show *
 main:
   port := uart.Port "/dev/ttyUSB0" --baud-rate=9600
 
-  // Constructing the driver starts the receiver task.
-  driver := Gnss-driver port.in port.out
-
-  // Register the NMEA parser against the NMEA magic byte ('$' == 0x24).
+  // Construct an instance of the NMEA parser.
   nmea-parser := NmeaParser
-  driver.add-parser nmea-parser
+
+  // Constructing the driver starts the receiver task.
+  driver := Gnss-driver port.in port.out --parsers=[nmea-parser]
 
   // Register a catch-all function that prints incoming messages that have
   // no other lambda's registered.
   driver.register-default-lambda (:: | msg | print "$msg")
 ```
 
-At this point the driver is already reading and decoding NMEA frames in the
-background. Other frame types are skipped automatically, so they will not
-corrupt NMEA frame detection.
+At this point the driver is already reading frames, and sending them to the NMEA
+parser to be parsed into message objects, in the background.  Other frame types
+are skipped automatically, so they will not corrupt NMEA frame detection.
 
-## Registering custom parsers manually
+## Registering custom/new parsers manually
 
-A parser is registered with a magic byte sequence and a parse lambda:
+If the user is creating a new parser, it requires a magic byte sequence and a
+parse lambda at minimum.  These need to be supplied to the add-parser function.
+A second variant of `add-parser` allows the user to add these manually:
 
 ```toit
+// add-parser (magic bytes in a byte array) (lambda)
 driver.add-parser #[0x24] (:: | r | nmea-parser.from-reader r)
 ```
 
-The lambda receives the underlying `io.Reader`, must consume exactly one complete
-frame, and must return the decoded message object. The driver matches the longest
-registered magic at the head of the stream, so multi-byte magics (such as UBX's
-`#[0xb5, 0x62]`) coexist with single-byte ones.
+The lambda receives the underlying `io.Reader`, and must consume exactly one
+complete frame, and must return the decoded message object.  The driver matches
+the longest registered magic at the head of the stream, so multi-byte magics
+(such as UBX's `#[0xb5, 0x62]`) will coexist with single-byte ones.
 
-To register more than one protocol, call `add-parser` once per protocol:
+To register more than one parser manually, call `add-parser` once each.  In this
+way, NMEA and UBX messages could be consumed simultaneously, if necessary:
 
 ```toit
 nmea-parser := NmeaParser
@@ -177,7 +182,7 @@ debug-level logging of unhandled messages. Pass `null` to deregister.
 > significant work in response to a message, dispatch it to a separate task from
 > inside your lambda and return immediately.
 
-## Sending to the device
+## Sending messages to the device
 
 Several send paths are provided depending on the protocol:
 
