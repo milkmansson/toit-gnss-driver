@@ -1,0 +1,4 @@
+name: gnss-driver
+description: Generic driver for GNSS receivers, designed for use with compatible parsers.
+environment:
+  sdk: ^2.0.0-alpha.190
