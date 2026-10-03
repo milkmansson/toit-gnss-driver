@@ -2,6 +2,9 @@
 
 Base parser-agnostic driver for GNSS devices.
 
+> [!CAUTION]
+> Still in testing - please advise of use, success or fail!
+
 ## Design
 
 `gnss-driver` is designed as a parser-agnostic driver for GNSS receivers in
